@@ -1,7 +1,5 @@
-Here’s a **full README.md code** you can copy–paste directly into your repo.
-It includes everything we discussed **plus the Mermaid architecture diagram** (and I also added a **sequence diagram** under Workflow to show the reasoning loop).
 
----
+
 
 ```markdown
 # 🚀 VoyageCraft – End-to-End Multi-Agent Orchestrator (Travel Domain)
