@@ -7,12 +7,9 @@ from rich.console import Console
 from orchestrators.react_loop import ReactLoop
 from utils.types import TripRequest, UserProfile
 
-app = typer.Typer(help="VoyageCraft CLI – run agentic planning flows")
 console = Console()
 
-
-@app.command()
-def simulate(
+def main(
     origin: str = typer.Option("Chicago", help="Starting city or airport"),
     destination: str = typer.Option("Paris", help="Destination city"),
     start_date: str = typer.Option("2025-09-10", help="YYYY-MM-DD"),
@@ -41,6 +38,5 @@ def simulate(
     console.print_json(json.dumps(plan.model_dump(), indent=2))
     console.rule()
 
-
 if __name__ == "__main__":
-    app()
+    typer.run(main)
