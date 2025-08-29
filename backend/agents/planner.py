@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any, Dict, List
 from .base import Agent
-from ..utils.types import TripRequest
+from utils.types import TripRequest
 
 GENERIC_ACTIVITIES = [
     "City walking tour",

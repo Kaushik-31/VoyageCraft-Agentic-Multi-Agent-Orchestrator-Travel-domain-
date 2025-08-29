@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any, Dict
 from .base import Agent
-from ..utils.types import TripRequest
+from utils.types import TripRequest
 
 DEFAULT_DAILY_COST_PER_PERSON = 120.0  # USD, conservative baseline
 
