@@ -1,103 +1,220 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState } from "react";
+import type { TripRequest, Plan } from "@/types";
+import { defaultRequest } from "@/types";
+import { createPlan, ApiError } from "@/lib/api";
+
+export default function Page() {
+  const [form, setForm] = useState<TripRequest>(defaultRequest);
+  const [interestsInput, setInterestsInput] = useState<string>(
+    defaultRequest.profile.interests.join(", ")
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
+
+  const onChange = <K extends keyof TripRequest>(key: K, value: TripRequest[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const onProfileChange = <K extends keyof TripRequest["profile"]>(
+    key: K,
+    value: TripRequest["profile"][K]
+  ) => {
+    setForm((prev) => ({ ...prev, profile: { ...prev.profile, [key]: value } }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setPlan(null);
+
+    // parse interests from text -> array
+    const interests = interestsInput
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const req: TripRequest = {
+      ...form,
+      profile: { ...form.profile, interests },
+    };
+
+    try {
+      const result = await createPlan(req);
+      setPlan(result);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(`Request failed (${err.status})`);
+        console.error("API error:", err.body);
+      } else {
+        setError("Something went wrong");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="min-h-screen bg-black text-white">
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <h1 className="text-3xl font-semibold tracking-tight">VoyageCraft – Planner</h1>
+        <p className="text-zinc-400">End-to-end multi-agent orchestrator (Travel)</p>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Form */}
+          <section className="rounded-2xl border border-zinc-800 p-6">
+            <h2 className="mb-4 text-xl font-medium">Trip Request</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-zinc-400">Origin</span>
+                  <input
+                    className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 outline-none focus:ring-2 focus:ring-zinc-700"
+                    value={form.origin}
+                    onChange={(e) => onChange("origin", e.target.value)}
+                    placeholder="Chicago"
+                    required
+                  />
+                </label>
+
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-zinc-400">Destination</span>
+                  <input
+                    className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 outline-none focus:ring-2 focus:ring-zinc-700"
+                    value={form.destination}
+                    onChange={(e) => onChange("destination", e.target.value)}
+                    placeholder="Paris"
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-zinc-400">Start date</span>
+                  <input
+                    type="date"
+                    className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 outline-none focus:ring-2 focus:ring-zinc-700"
+                    value={form.start_date}
+                    onChange={(e) => onChange("start_date", e.target.value)}
+                    required
+                  />
+                </label>
+
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-zinc-400">Days</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 outline-none focus:ring-2 focus:ring-zinc-700"
+                    value={form.days}
+                    onChange={(e) => onChange("days", Number(e.target.value))}
+                    required
+                  />
+                </label>
+
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-zinc-400">People</span>
+                  <input
+                    type="number"
+                    min={1}
+                    className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 outline-none focus:ring-2 focus:ring-zinc-700"
+                    value={form.profile.people}
+                    onChange={(e) => onProfileChange("people", Number(e.target.value))}
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-zinc-400">Budget total (USD)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 outline-none focus:ring-2 focus:ring-zinc-700"
+                    value={form.profile.budget_total ?? ""}
+                    onChange={(e) =>
+                      onProfileChange(
+                        "budget_total",
+                        e.target.value === "" ? undefined : Number(e.target.value)
+                      )
+                    }
+                    placeholder="1000"
+                  />
+                </label>
+
+                <label className="flex flex-col gap-2">
+                  <span className="text-sm text-zinc-400">Interests (comma-separated)</span>
+                  <input
+                    className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 outline-none focus:ring-2 focus:ring-zinc-700"
+                    value={interestsInput}
+                    onChange={(e) => setInterestsInput(e.target.value)}
+                    placeholder="art, cafes"
+                  />
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-2 inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 font-medium text-black hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Planning…" : "Create plan"}
+              </button>
+
+              {error && <p className="text-sm text-red-400">{error}</p>}
+            </form>
+          </section>
+
+          {/* Results */}
+          <section className="rounded-2xl border border-zinc-800 p-6">
+            <h2 className="mb-4 text-xl font-medium">Result</h2>
+            {!plan && !loading && <p className="text-zinc-400">No plan yet. Submit the form.</p>}
+
+            {plan && (
+              <div className="space-y-6">
+                <div className="rounded-xl border border-zinc-800 p-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">
+                      {plan.destination} — {plan.days.length} days
+                    </h3>
+                    <div className="text-sm text-zinc-400">
+                      Est. cost: <span className="text-white">${plan.total_estimated_cost}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {plan.days.map((d) => (
+                    <div key={d.day} className="rounded-xl border border-zinc-800 p-4">
+                      <div className="mb-2 text-sm text-zinc-400">
+                        Day {d.day} • {d.date}
+                      </div>
+                      <ul className="list-disc space-y-1 pl-6">
+                        {d.activities.map((a, i) => (
+                          <li key={i}>{a}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-xl border border-zinc-800 p-4">
+                  <div className="mb-2 text-sm text-zinc-400">Decision trace</div>
+                  <pre className="whitespace-pre-wrap text-sm text-zinc-300">
+                    {plan.trace.join("\n")}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </section>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }
