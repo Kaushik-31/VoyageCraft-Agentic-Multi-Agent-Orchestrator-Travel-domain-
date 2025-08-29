@@ -1,1 +1,27 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Python (backend)
+backend/.venv/
 backend/.env
+__pycache__/
+*.pyc
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Node / Next.js (frontend)
+frontend/node_modules/
+frontend/.next/
+frontend/.vercel/
+frontend/.turbo/
+frontend/.env.local
+frontend/.env
+frontend/.env.*
+
+# Logs & build
+*.log
+logs/
+dist/
+build/
