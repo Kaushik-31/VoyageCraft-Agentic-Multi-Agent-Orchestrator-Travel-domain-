@@ -1,10 +1,11 @@
 from fastapi import APIRouter
+from utils.types import TripRequest
 from orchestrators.react_loop import ReactLoop
-from utils.types import TripRequest, Plan
 
-router = APIRouter(prefix="/plan", tags=["plan"])
+router = APIRouter()
 
-@router.post("", response_model=Plan)
-def create_plan(req: TripRequest) -> Plan:
+@router.post("/plan")
+def generate_plan(request: TripRequest):
     orch = ReactLoop()
-    return orch.run(req)
+    plan = orch.run(request)
+    return plan.model_dump()
